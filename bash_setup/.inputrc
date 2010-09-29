@@ -1,0 +1,5 @@
+# Skip to the beggining and end of words
+"\e[5C": forward-word # ctrl-right
+"\e[5D": backward-word # ctrl-left
+# Ignore the case of the folder/file when using tab complete
+set completion-ignore-case On

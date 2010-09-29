@@ -1,7 +1,7 @@
 #!/bin/bash
 # A nice pretty bash environment.
 #
-# Chris Hallendy with help from Gray Manley, Ryan Tomayko and the internet.
+# Gray Manley with help from Ryan Tomayko and the internet.
 
 # the basics
 : ${HOME=~}
@@ -18,23 +18,40 @@
 #  SHELL OPTIONS
 # ----------------------------------------------------------------------
 
-# shell opts. see bash(1) for details
+# Enables cd to correct minor typos ie. 'mkdir /foo && cd /foe && pwd' => /foo
 shopt -s cdspell >/dev/null 2>&1
+# Extended pattern matching ie. 'ls -d !(*gif|*jpg)' shows everything except jpg and gif.
 shopt -s extglob >/dev/null 2>&1
+# Append command history when using multiple shells instead of overwriting it.
 shopt -s histappend >/dev/null 2>&1
+# Allow tab completion of hosts found in $HOSTFILE which in this case is ~/.ssh/known_hosts
 shopt -s hostcomplete >/dev/null 2>&1
-shopt -s interactive_comments >/dev/null 2>&1
-shopt -u mailwarn >/dev/null 2>&1
+# Don't attempt to tab complete without a preceding command.
 shopt -s no_empty_cmd_completion >/dev/null 2>&1
 
-# that new mail crap
-unset MAILCHECK
+# Notify of background job completion.
+set -o notify
 
-# disable core dumps
+# Disable automatic core dumps.
 ulimit -S -c 0
 
-# default umask
+# Set default umask
 umask 0022
+
+# ----------------------------------------------------------------------
+# PATH
+# ----------------------------------------------------------------------
+
+# we want the various sbins on the path along with /usr/local/bin
+PATH="$PATH:/usr/local/sbin:/usr/sbin:/sbin"
+
+# I like to put my various aliases in a seperate file
+if [ -f ~/.bash_aliases ]; then
+    . ~/.bash_aliases
+fi
+
+# Readline config
+INPUTRC=$HOME/.inputrc
 
 # ----------------------------------------------------------------------
 # ENVIRONMENT CONFIGURATION
@@ -63,67 +80,16 @@ export LANG LANGUAGE LC_CTYPE LC_ALL
 : ${FTP_PASSIVE:=1}
 export FTP_PASSIVE
 
+# Don't list the same command more then once in history
+HISTCONTROL=ignoreboth
+
 # ----------------------------------------------------------------------
 # PROMPT
 # ----------------------------------------------------------------------
 
 prompt_color() {
     PS1="\[\033[0;32m\]\h\[\033[0;36m\] \w\[\033[00m\] ∴ "
-    PS2="\[[33;1m\]continue \[[0m[1m\]> "
-}
-
-# ----------------------------------------------------------------------
-# ALIASES / FUNCTIONS
-# ----------------------------------------------------------------------
-
-# GENERAL #
-alias ls="ls -a" # general list of files but includes hiden things too
-alias lsa='ls -lah' # l for list style, a for all including hidden, h for human readable file sizes
-alias h='history' # show history
-alias c='clear' # clear terminal
-alias ..='cd ..' # move up 1 dir
-alias ...='cd ../..' # move up 2 dirs
-alias rbash=". ~/.bash_profile" # reloads bash profile
-alias ebash='mvim ~/.bashrc' # edit bash_profile in macvim
-alias ping='ping -c 5' # pings specified server 5 times
-alias shotgun='shotgun --server thin --port 4567'
-alias ps='ps ux' 
-alias fkill='kill -9'
-
-# RUBY #
-alias irb='irb --readline -r irb/completion -rubygems' # use readline, completion and require rubygems in irb
-# allows you to open specified gem in textmate! type: mategem <gem name>
-function mategem {
-mate /Library/Ruby/Gems/1.8/gems/`ls /Library/Ruby/Gems/1.8/gems/|grep $1|sort|tail -1`
-}
-
-# RAILS #
-alias ss="script/server"
-alias sc="script/console"
-alias sg="script/generate"
-alias rdbm="rake db:migrate"
-alias rdbc="rake db:create"
-
-# GIT #
-alias gc="git commit -m"
-alias gs="git status"
-alias gp="git push origin master"
-alias gb="git branch"
-alias spec="bundle exec rspec"
-
-# ----------------------------------------------------------------------
-# BASH COMPLETION
-# ----------------------------------------------------------------------
-
-  if [ -f `brew --prefix`/etc/bash_completion ]; then
-    . `brew --prefix`/etc/bash_completion
-  fi
-  
-  unset bash bmajor bminor
-
-# override and disable tilde expansion
-_expand() {
-    return 0
+    PS2="\[\]continue \[\]> "
 }
 
 # ----------------------------------------------------------------------
@@ -152,13 +118,6 @@ push_ssh_cert() {
 # USER SHELL ENVIRONMENT
 # -------------------------------------------------------------------
 
-# bring in rbdev functions
-. rbdev 2>/dev/null || true
-
-# source ~/.shenv now if it exists
-test -r ~/.shenv &&
-. ~/.shenv
-
 # Use the color prompt by default when interactive
 test -n "$PS1" &&
 prompt_color
@@ -168,13 +127,6 @@ prompt_color
 # -------------------------------------------------------------------
 
 test -n "$INTERACTIVE" -a -n "$LOGIN" && {
-    uname -npsr
+    uname -prs
     uptime
 }
-
-#Pman for viewing man pages in preview
-function pman () {
-    man -t $1 | open -f -a /Applications/Preview.app
-}
-
-
